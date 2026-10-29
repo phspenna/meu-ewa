@@ -1,242 +1,561 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Meu EWA</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Meu EWA Premium</title>
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-white font-sans min-h-screen pb-24 select-none">
+  <style>
+    html, body {
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      background: #020817;
+    }
 
-  <header class="bg-slate-800 p-4 text-center font-bold text-lg border-b border-slate-700 sticky top-0 z-10">
+    .word-btn {
+      position: relative;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .word-btn:hover {
+      background: rgba(99, 102, 241, 0.35);
+    }
+
+    .word-btn:active {
+      transform: scale(0.98);
+    }
+
+    .nav-item {
+      transition: all 0.2s ease;
+    }
+
+    .card-item {
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card-item:hover {
+      border-color: rgba(129, 140, 248, 0.6);
+    }
+
+    .hidden-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .hidden-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .glass {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-white font-sans min-h-screen pb-28 select-none">
+
+  <header class="bg-slate-800/90 glass p-4 text-center font-bold text-lg border-b border-slate-700 sticky top-0 z-20">
     📚 Meu App de Idiomas
   </header>
 
   <main id="tab-reader" class="p-4 max-w-md mx-auto">
     <div class="mb-4">
-      <textarea id="raw-text" rows="4" class="w-full p-3 rounded-xl bg-slate-800 text-white border border-slate-700 focus:outline-none select-text" placeholder="Cole aqui o seu texto em inglês...">Learning a new language is much easier when you read stories that you actually enjoy every day.</textarea>
-      <button id="btn-process" type="button" class="w-full mt-2 bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl font-semibold shadow-lg">Carregar Texto Interativo</button>
+      <div class="flex gap-2 mb-2">
+        <label class="flex-1">
+          <span class="sr-only">Idioma do texto</span>
+          <select id="lang-select" class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none">
+            <option value="en|pt-BR">Inglês → Português</option>
+            <option value="pt|en">Português → Inglês</option>
+          </select>
+        </label>
+      </div>
+
+      <textarea
+        id="raw-text"
+        rows="5"
+        class="w-full p-3 rounded-2xl bg-slate-800 text-white border border-slate-700 focus:outline-none select-text"
+        placeholder="Cole aqui o seu texto para estudar..."
+      >The quick brown fox jumps over the lazy dog. Learning English is fun and exciting. Practice every day to improve your vocabulary.</textarea>
+
+      <div class="flex gap-2 mt-3">
+        <button
+          id="btn-process"
+          type="button"
+          class="flex-1 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-400 py-3 rounded-xl font-semibold shadow-lg"
+        >
+          Carregar Texto
+        </button>
+        <button
+          id="btn-clear"
+          type="button"
+          class="w-14 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold"
+          aria-label="Limpar texto"
+        >
+          🗑️
+        </button>
+      </div>
     </div>
 
-    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 min-h-[250px]">
-      <p class="text-xs text-slate-400 mb-3 uppercase tracking-wider">Toque em qualquer palavra para traduzir e ouvir:</p>
+    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 min-h-[260px]">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-xs text-slate-400 uppercase tracking-wider">
+          Toque em qualquer palavra para traduzir e ouvir:
+        </p>
+        <span id="word-count" class="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">0 palavras</span>
+      </div>
+
       <div id="interactive-text" class="text-xl leading-relaxed flex flex-wrap gap-1.5"></div>
     </div>
   </main>
 
   <main id="tab-cards" class="p-4 max-w-md mx-auto hidden">
-    <h2 class="text-lg font-semibold mb-3 text-slate-300">Minhas Palavras Guardadas</h2>
-    <div id="cards-list" class="space-y-3"></div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold text-slate-300">Minhas Palavras Guardadas</h2>
+      <button id="btn-clear-cards" class="text-xs bg-red-900/40 text-red-300 px-2 py-1.5 rounded-lg">
+        Limpar
+      </button>
+    </div>
+
+    <div class="mb-3 flex gap-2">
+      <button class="filter-btn flex-1 bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-medium active:opacity-80" data-filter="all">
+        Todas
+      </button>
+      <button class="filter-btn flex-1 bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-sm font-medium active:opacity-80" data-filter="recent">
+        Recentes
+      </button>
+      <button class="filter-btn flex-1 bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-sm font-medium active:opacity-80" data-filter="saved">
+        Guardadas
+      </button>
+    </div>
+
+    <div id="cards-list" class="space-y-3 hidden-scrollbar"></div>
   </main>
 
   <div id="modal" class="fixed inset-0 bg-black/70 hidden items-end justify-center z-50">
-    <div class="bg-slate-800 w-full max-w-md rounded-t-3xl p-6 border-t border-slate-700">
-      <div class="flex justify-between items-center mb-2">
-        <h3 id="modal-word" class="text-3xl font-bold text-indigo-400">Palavra</h3>
-        <button id="btn-speak" type="button" class="bg-slate-700 p-3 rounded-full text-xl">🔊</button>
+    <div class="bg-slate-800 w-full max-w-md rounded-t-3xl p-6 border-t border-slate-700 shadow-2xl">
+      <div class="flex justify-between items-center mb-3">
+        <h3 id="modal-word" class="text-3xl font-bold text-indigo-400 break-words">Palavra</h3>
+        <button id="btn-speak" type="button" class="bg-slate-700 p-3 rounded-full text-xl" aria-label="Ouvir palavra">
+          🔊
+        </button>
       </div>
-      <p id="modal-translation" class="text-xl text-slate-200 mb-6">A traduzir...</p>
-      <div class="flex gap-3">
-        <button id="btn-close" type="button" class="flex-1 py-3 rounded-xl bg-slate-700 font-semibold">Fechar</button>
-        <button id="btn-save" type="button" class="flex-1 py-3 rounded-xl bg-indigo-600 font-semibold">⭐ Guardar</button>
+
+      <div class="mb-4">
+        <p class="text-xs uppercase tracking-wider text-slate-400 mb-2">Tradução</p>
+        <p id="modal-translation" class="text-xl text-slate-200 min-h-[32px] leading-relaxed break-words">
+          A traduzir...
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btn-close" type="button" class="py-3 rounded-xl bg-slate-700 font-semibold">
+          Fechar
+        </button>
+        <button id="btn-save" type="button" class="py-3 rounded-xl bg-indigo-600 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          ⭐ Guardar
+        </button>
       </div>
     </div>
   </div>
 
-  <nav class="fixed bottom-0 inset-x-0 bg-slate-800 border-t border-slate-700 flex justify-around p-3 max-w-md mx-auto z-40">
-    <button id="nav-reader" type="button" class="text-indigo-400 font-semibold flex flex-col items-center text-sm">
-      <span>📖</span><span>Leitor</span>
+  <nav class="fixed bottom-0 inset-x-0 bg-slate-800/90 glass border-t border-slate-700 flex justify-around p-3 max-w-md mx-auto z-40">
+    <button id="nav-reader" type="button" class="nav-item text-indigo-400 font-semibold flex flex-col items-center text-sm" aria-label="Leitor">
+      <span>📖</span>
+      <span>Leitor</span>
     </button>
-    <button id="nav-cards" type="button" class="text-slate-400 font-semibold flex flex-col items-center text-sm">
-      <span>🗂️</span><span>Flashcards</span>
+
+    <button id="nav-cards" type="button" class="nav-item text-slate-400 font-semibold flex flex-col items-center text-sm" aria-label="Flashcards">
+      <span>🗂️</span>
+      <span>Flashcards</span>
     </button>
   </nav>
 
   <script>
-    var currentWord = "";
-    var currentTranslation = "";
+    const STORAGE_KEY = "my_ewa_cards_v2";
+    const CURRENT_LANG_KEY = "my_ewa_lang";
 
-    function processText() {
-      var text = document.getElementById("raw-text").value;
-      var container = document.getElementById("interactive-text");
-      container.innerHTML = "";
-      var lines = text.split("\n");
-      
-      for (var i = 0; i < lines.length; i++) {
-        var words = lines[i].split(" ");
-        for (var j = 0; j < words.length; j++) {
-          var w = words[j].trim();
-          if (w.length > 0) {
-            (function(wordToOpen) {
-              var span = document.createElement("span");
-              span.textContent = wordToOpen;
-              span.className = "cursor-pointer px-1.5 py-0.5 rounded-lg bg-slate-700/40 hover:bg-indigo-600/40 active:bg-indigo-600 transition";
-              span.addEventListener("click", function() {
-                openWord(wordToOpen);
-              });
-              container.appendChild(span);
-            })(w);
-          }
-        }
-        var br = document.createElement("div");
-        br.className = "w-full h-2";
-        container.appendChild(br);
-      }
+    let currentWord = "";
+    let currentTranslation = "";
+    let currentFilter = "all";
+
+    const rawText = document.getElementById("raw-text");
+    const interactiveText = document.getElementById("interactive-text");
+    const modal = document.getElementById("modal");
+    const modalWord = document.getElementById("modal-word");
+    const modalTranslation = document.getElementById("modal-translation");
+    const saveButton = document.getElementById("btn-save");
+    const wordCount = document.getElementById("word-count");
+    const langSelect = document.getElementById("lang-select");
+
+    function normalizeWord(rawWord) {
+      const word = String(rawWord || "").trim();
+
+      if (!word) return "";
+
+      const cleaned = word
+        .toLowerCase()
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[^a-zà-ÿ0-9']/g, "");
+
+      return cleaned.length ? cleaned : "";
+    }
+
+    function buildTranslationUrl(word, pair) {
+      const normalizedPair = pair || "en|pt-BR";
+      return `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=${encodeURIComponent(normalizedPair)}`;
     }
 
     function speakWord(text) {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        var utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-US";
-        window.speechSynthesis.speak(utterance);
+      const safeText = String(text || "").trim();
+
+      if (!safeText || !("speechSynthesis" in window)) {
+        return;
       }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(safeText);
+      const pair = langSelect.value;
+
+      utterance.lang = pair.startsWith("pt") ? "pt-BR" : "en-US";
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function processText() {
+      const text = rawText.value || "";
+      const container = interactiveText;
+      container.innerHTML = "";
+
+      if (!text.trim()) {
+        const empty = document.createElement("p");
+        empty.className = "text-slate-400 text-center w-full py-10";
+        empty.textContent = "Cole um texto para começar.";
+        container.appendChild(empty);
+        wordCount.textContent = "0 palavras";
+        return;
+      }
+
+      const lines = text.split(/\n/);
+      let wordTotal = 0;
+
+      lines.forEach((line) => {
+        const words = line.split(/\s+/).filter(Boolean);
+
+        words.forEach((rawToken, index) => {
+          const normalized = normalizeWord(rawToken);
+
+          if (!normalized) return;
+
+          const span = document.createElement("span");
+          span.textContent = rawToken;
+          span.className = "word-btn cursor-pointer px-1.5 py-0.5 rounded-lg bg-slate-700/40 hover:bg-indigo-600/40 active:bg-indigo-600 transition";
+          span.tabIndex = 0;
+          span.setAttribute("role", "button");
+          span.setAttribute("aria-label", `Traduzir palavra ${normalized}`);
+
+          span.addEventListener("click", () => openWord(normalized));
+          span.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openWord(normalized);
+            }
+          });
+
+          container.appendChild(span);
+          if (index < words.length - 1) {
+            container.appendChild(document.createTextNode(" "));
+          }
+
+          wordTotal++;
+        });
+
+        const lineBreak = document.createElement("div");
+        lineBreak.className = "w-full h-2";
+        container.appendChild(lineBreak);
+      });
+
+      wordCount.textContent = `${wordTotal} palavra${wordTotal === 1 ? "" : "s"}`;
     }
 
     function openWord(rawWord) {
-      var clean = rawWord.replace(/[^a-zA-Z\']/g, "");
-      if (!clean) clean = rawWord;
-      currentWord = clean;
-      currentTranslation = "...";
-      
-      document.getElementById("modal-word").textContent = clean;
-      document.getElementById("modal-translation").textContent = "A traduzir...";
-      document.getElementById("modal").classList.remove("hidden");
-      document.getElementById("modal").classList.add("flex");
-      
-      speakWord(clean);
+      const cleanedWord = normalizeWord(rawWord);
 
-      var url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(clean) + "&langpair=en|pt-BR";
+      if (!cleanedWord) return;
+
+      currentWord = cleanedWord;
+      currentTranslation = "";
+      saveButton.disabled = true;
+
+      modalWord.textContent = cleanedWord;
+      modalTranslation.textContent = "A traduzir...";
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      speakWord(cleanedWord);
+
+      const pair = langSelect.value;
+      const url = buildTranslationUrl(cleanedWord, pair);
+
       fetch(url)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          currentTranslation = data.responseData.translatedText;
-          document.getElementById("modal-translation").textContent = currentTranslation;
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error("Erro ao consultar tradução.");
+          }
+
+          const data = await response.json();
+          const translatedText = data?.responseData?.translatedText || "Tradução não disponível.";
+
+          currentTranslation = translatedText;
+          modalTranslation.textContent = translatedText;
+          saveButton.disabled = false;
         })
-        .catch(function() {
-          document.getElementById("modal-translation").textContent = "Erro ao traduzir.";
+        .catch(() => {
+          currentTranslation = "Erro ao traduzir.";
+          modalTranslation.textContent = "Erro ao traduzir.";
+          saveButton.disabled = true;
         });
     }
 
     function closeModal() {
-      document.getElementById("modal").classList.add("hidden");
-      document.getElementById("modal").classList.remove("flex");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
     }
 
     function getCards() {
       try {
-        return JSON.parse(localStorage.getItem("my_ewa_cards") || "[]");
-      } catch (e) {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch {
         return [];
       }
     }
 
+    function setCards(cards) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    }
+
     function saveFlashcard() {
-      var cards = getCards();
-      var exists = false;
-      for (var i = 0; i < cards.length; i++) {
-        if (cards[i].word.toLowerCase() === currentWord.toLowerCase()) {
-          exists = true;
-          break;
-        }
+      if (!currentWord || !currentTranslation) return;
+
+      const cards = getCards();
+      const alreadyExists = cards.some((card) => {
+        return String(card.word || "").toLowerCase() === currentWord.toLowerCase();
+      });
+
+      if (!alreadyExists) {
+        cards.unshift({
+          word: currentWord,
+          translation: currentTranslation,
+          createdAt: new Date().toISOString(),
+          lastReviewed: null
+        });
+
+        setCards(cards);
       }
-      if (!exists) {
-        cards.unshift({ word: currentWord, translation: currentTranslation });
-        localStorage.setItem("my_ewa_cards", JSON.stringify(cards));
-      }
+
       closeModal();
+      renderCards();
+    }
+
+    function deleteCard(index) {
+      const cards = getCards();
+      cards.splice(index, 1);
+      setCards(cards);
+      renderCards();
     }
 
     function renderCards() {
-      var cards = getCards();
-      var list = document.getElementById("cards-list");
+      const list = document.getElementById("cards-list");
+      const cards = getCards();
+
       list.innerHTML = "";
-      
-      if (cards.length === 0) {
-        var empty = document.createElement("p");
+
+      const filteredCards = cards.filter((card) => {
+        if (currentFilter === "recent") {
+          return Date.now() - new Date(card.createdAt || Date.now()).getTime() < 1000 * 60 * 60 * 24 * 7;
+        }
+
+        if (currentFilter === "saved") {
+          return true;
+        }
+
+        return true;
+      });
+
+      if (!filteredCards.length) {
+        const empty = document.createElement("p");
         empty.className = "text-slate-400 text-center py-8";
-        empty.textContent = "Nenhuma palavra guardada ainda. Toque nas palavras no Leitor para guardar!";
+        empty.textContent = "Nenhuma palavra para mostrar com este filtro.";
         list.appendChild(empty);
         return;
       }
 
-      for (var i = 0; i < cards.length; i++) {
-        (function(index, card) {
-          var item = document.createElement("div");
-          item.className = "bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center cursor-pointer";
-          
-          var left = document.createElement("div");
-          var title = document.createElement("p");
-          title.className = "text-xl font-bold text-indigo-400";
-          title.textContent = card.word;
-          
-          var transl = document.createElement("p");
-          transl.className = "hidden text-slate-200 mt-1 font-medium";
-          transl.textContent = "👉 " + card.translation;
-          
-          var hint = document.createElement("p");
-          hint.className = "text-xs text-slate-500 mt-1";
-          hint.textContent = "(Toque para ver a tradução)";
-          
-          left.appendChild(title);
-          left.appendChild(transl);
-          left.appendChild(hint);
-          
-          item.addEventListener("click", function() {
-            transl.classList.toggle("hidden");
-          });
+      filteredCards.forEach((card, originalIndex) => {
+        const item = document.createElement("div");
+        item.className = "card-item bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center cursor-pointer";
 
-          var right = document.createElement("div");
-          right.className = "flex gap-2";
-          
-          var btnAudio = document.createElement("button");
-          btnAudio.className = "bg-slate-700 p-2.5 rounded-xl";
-          btnAudio.textContent = "🔊";
-          btnAudio.addEventListener("click", function(e) {
-            e.stopPropagation();
-            speakWord(card.word);
-          });
+        const left = document.createElement("div");
+        left.className = "flex-1 min-w-0 pr-3";
 
-          var btnDel = document.createElement("button");
-          btnDel.className = "bg-red-900/40 text-red-400 p-2.5 rounded-xl";
-          btnDel.textContent = "🗑️";
-          btnDel.addEventListener("click", function(e) {
-            e.stopPropagation();
-            var c = getCards();
-            c.splice(index, 1);
-            localStorage.setItem("my_ewa_cards", JSON.stringify(c));
-            renderCards();
-          });
+        const title = document.createElement("p");
+        title.className = "text-xl font-bold text-indigo-400 break-words";
+        title.textContent = card.word;
 
-          right.appendChild(btnAudio);
-          right.appendChild(btnDel);
-          item.appendChild(left);
-          item.appendChild(right);
-          list.appendChild(item);
-        })(i, cards[i]);
-      }
+        const transl = document.createElement("p");
+        transl.className = "hidden text-slate-200 mt-1 font-medium break-words";
+        transl.textContent = `👉 ${card.translation}`;
+
+        const meta = document.createElement("p");
+        meta.className = "text-[11px] text-slate-500 mt-1";
+        meta.textContent = new Date(card.createdAt || Date.now()).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        });
+
+        left.appendChild(title);
+        left.appendChild(transl);
+        left.appendChild(meta);
+
+        item.addEventListener("click", () => {
+          transl.classList.toggle("hidden");
+        });
+
+        const right = document.createElement("div");
+        right.className = "flex gap-2";
+
+        const btnAudio = document.createElement("button");
+        btnAudio.type = "button";
+        btnAudio.className = "bg-slate-700 p-2.5 rounded-xl";
+        btnAudio.textContent = "🔊";
+        btnAudio.setAttribute("aria-label", `Ouvir ${card.word}`);
+        btnAudio.addEventListener("click", (event) => {
+          event.stopPropagation();
+          speakWord(card.word);
+        });
+
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.className = "bg-red-900/40 text-red-400 p-2.5 rounded-xl";
+        btnDel.textContent = "🗑️";
+        btnDel.setAttribute("aria-label", `Excluir ${card.word}`);
+        btnDel.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const allCards = getCards();
+          const index = allCards.findIndex((c) => c.word === card.word && c.translation === card.translation);
+          if (index >= 0) deleteCard(index);
+        });
+
+        right.appendChild(btnAudio);
+        right.appendChild(btnDel);
+
+        item.appendChild(left);
+        item.appendChild(right);
+        list.appendChild(item);
+      });
     }
 
     function switchTab(tab) {
-      var isReader = (tab === "reader");
-      document.getElementById("tab-reader").classList.toggle("hidden", !isReader);
-      document.getElementById("tab-cards").classList.toggle("hidden", isReader);
-      document.getElementById("nav-reader").className = isReader ? "text-indigo-400 font-semibold flex flex-col items-center text-sm" : "text-slate-400 font-semibold flex flex-col items-center text-sm";
-      document.getElementById("nav-cards").className = !isReader ? "text-indigo-400 font-semibold flex flex-col items-center text-sm" : "text-slate-400 font-semibold flex flex-col items-center text-sm";
-      if (!isReader) renderCards();
+      const isReader = tab === "reader";
+      const tabReader = document.getElementById("tab-reader");
+      const tabCards = document.getElementById("tab-cards");
+      const navReader = document.getElementById("nav-reader");
+      const navCards = document.getElementById("nav-cards");
+
+      tabReader.classList.toggle("hidden", !isReader);
+      tabCards.classList.toggle("hidden", isReader);
+
+      navReader.classList.toggle("text-indigo-400", isReader);
+      navReader.classList.toggle("text-slate-400", !isReader);
+
+      navCards.classList.toggle("text-indigo-400", !isReader);
+      navCards.classList.toggle("text-slate-400", isReader);
+
+      if (!isReader) {
+        renderCards();
+      }
+    }
+
+    function setupFilters() {
+      document.querySelectorAll(".filter-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          currentFilter = button.dataset.filter;
+
+          document.querySelectorAll(".filter-btn").forEach((btn) => {
+            const active = btn === button;
+            btn.classList.toggle("bg-indigo-600", active);
+            btn.classList.toggle("text-white", active);
+            btn.classList.toggle("bg-slate-700", !active);
+            btn.classList.toggle("text-slate-200", !active);
+          });
+
+          renderCards();
+        });
+      });
+    }
+
+    function clearText() {
+      rawText.value = "";
+      processText();
+    }
+
+    function clearCards() {
+      const confirmed = window.confirm("Deseja limpar todas as palavras guardadas?");
+      if (!confirmed) return;
+
+      localStorage.removeItem(STORAGE_KEY);
+      renderCards();
+    }
+
+    function restoreLanguage() {
+      const saved = localStorage.getItem(CURRENT_LANG_KEY) || "en|pt-BR";
+      langSelect.value = saved;
+    }
+
+    function saveLanguage() {
+      localStorage.setItem(CURRENT_LANG_KEY, langSelect.value);
     }
 
     document.getElementById("btn-process").addEventListener("click", processText);
-    document.getElementById("raw-text").addEventListener("input", processText);
-    document.getElementById("btn-speak").addEventListener("click", function() { speakWord(currentWord); });
+    rawText.addEventListener("input", processText);
+
+    document.getElementById("btn-clear").addEventListener("click", clearText);
+    document.getElementById("btn-clear-cards").addEventListener("click", clearCards);
+
+    document.getElementById("btn-speak").addEventListener("click", () => {
+      speakWord(currentWord);
+    });
+
     document.getElementById("btn-close").addEventListener("click", closeModal);
     document.getElementById("btn-save").addEventListener("click", saveFlashcard);
-    document.getElementById("nav-reader").addEventListener("click", function() { switchTab("reader"); });
-    document.getElementById("nav-cards").addEventListener("click", function() { switchTab("cards"); });
 
+    document.getElementById("nav-reader").addEventListener("click", () => {
+      switchTab("reader");
+    });
+
+    document.getElementById("nav-cards").addEventListener("click", () => {
+      switchTab("cards");
+    });
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    langSelect.addEventListener("change", () => {
+      saveLanguage();
+      processText();
+    });
+
+    restoreLanguage();
+    setupFilters();
     processText();
+    renderCards();
   </script>
 </body>
 </html>
